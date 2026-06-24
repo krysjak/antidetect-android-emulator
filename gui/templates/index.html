@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AntiDetect Emulator</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <span class="logo">🤖</span>
+                <h1>AntiDetect Emulator</h1>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-icon" onclick="showSettings()" title="Settings">⚙️</button>
+                <button class="btn btn-icon" onclick="showHelp()" title="Help">❓</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Device Grid -->
+            <section class="devices-section">
+                <div class="section-header">
+                    <h2>📱 Your Devices</h2>
+                    <button class="btn btn-primary" onclick="showCreateDialog()">
+                        <span>+</span> New Device
+                    </button>
+                </div>
+                <div class="devices-grid" id="devicesGrid">
+                    <!-- Devices will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Quick Stats -->
+            <section class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">📱</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalDevices">0</span>
+                        <span class="stat-label">Total Devices</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🟢</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="runningDevices">0</span>
+                        <span class="stat-label">Running</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔒</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="protectedDevices">0</span>
+                        <span class="stat-label">Anti-Detect Active</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AntiDetect Status Panel -->
+            <section class="antidetect-section">
+                <div class="section-header">
+                    <h2>🛡️ AntiDetect Status</h2>
+                    <button class="btn btn-secondary" onclick="refreshStatus()">↻ Refresh</button>
+                </div>
+                <div class="status-grid">
+                    <div class="status-card" id="adbStatus">
+                        <div class="status-header">
+                            <span class="status-icon">📡</span>
+                            <span class="status-title">ADB Connection</span>
+                        </div>
+                        <div class="status-body">
+                            <span class="status-indicator disconnected">●</span>
+                            <span class="status-text">Checking...</span>
+                        </div>
+                    </div>
+                    <div class="status-card" id="fridaStatus">
+                        <div class="status-header">
+                            <span class="status-icon">🔧</span>
+                            <span class="status-title">Frida Server</span>
+                        </div>
+                        <div class="status-body">
+                            <span class="status-indicator disconnected">●</span>
+                            <span class="status-text">Checking...</span>
+                        </div>
+                        <button class="btn btn-small btn-primary" id="fridaInstallBtn" onclick="installFrida()"
+                            style="display:none;">
+                            Install Frida
+                        </button>
+                    </div>
+                    <div class="status-card" id="spoofStatus">
+                        <div class="status-header">
+                            <span class="status-icon">🎭</span>
+                            <span class="status-title">Device Spoofing</span>
+                        </div>
+                        <div class="status-body">
+                            <span class="status-indicator disconnected">●</span>
+                            <span class="status-text">Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Create Device Modal -->
+        <div class="modal" id="createModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Create New Device</h3>
+                    <button class="btn-close" onclick="hideCreateDialog()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Device Name (optional)</label>
+                        <input type="text" id="deviceName" placeholder="Auto-generated if empty">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Model</label>
+                        <select id="phoneModel">
+                            <option value="">Loading models...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Android Version</label>
+                        <select id="androidVersion">
+                            <option value="14">Android 14 (API 34)</option>
+                            <option value="13">Android 13 (API 33)</option>
+                            <option value="12">Android 12 (API 31)</option>
+                            <option value="11">Android 11 (API 30)</option>
+                            <option value="10">Android 10 (API 29)</option>
+                            <option value="9">Android 9 (API 28)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Proxy (optional)</label>
+                        <input type="text" id="proxyAddress" placeholder="socks5://127.0.0.1:1080">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="hideCreateDialog()">Cancel</button>
+                    <button class="btn btn-primary" onclick="createDevice()">Create Device</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Details Modal -->
+        <div class="modal" id="detailsModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3>Device Details</h3>
+                    <button class="btn-close" onclick="hideDetailsModal()">×</button>
+                </div>
+                <div class="modal-body" id="deviceDetails">
+                    <!-- Details loaded dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
